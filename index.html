@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expensiver - Smart Group Expense Tracker</title>
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap;">
+          <div class="logo-circle">
+            <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="24" cy="24" r="22" fill="#fff" stroke="#4338ca" stroke-width="2" />
+              <text x="50%" y="56%" text-anchor="middle" fill="#4f46e5" font-size="22" font-family="Inter, Arial, sans-serif" font-weight="bold" dy=".3em">₹$</text>
+              <path d="M16 32c2 2 6 2 8 0s6-2 8 0" stroke="#4338ca" stroke-width="2" stroke-linecap="round" fill="none" />
+            </svg>
+          </div>
+          <div>
+            <h1>Expensiver</h1>
+            <div class="tagline">Track group expenses and split bills effortlessly</div>
+          </div>
+        </div>
+        <div class="nav-buttons">
+          <button class="primary-button" onclick="showSection('dashboard')">
+            <i class="fas fa-home"></i> Dashboard
+          </button>
+          <button class="secondary-button" onclick="showSection('create-group')">
+            <i class="fas fa-plus-circle"></i> Create Group
+          </button>
+          <button class="secondary-button" onclick="showSection('join-group')">
+            <i class="fas fa-sign-in-alt"></i> Join Group
+          </button>
+          <button class="secondary-button wallet-nav-button" onclick="showSection('wallet')">
+            <i class="fas fa-wallet"></i> Wallet
+          </button>
+          <button class="secondary-button" onclick="showSection('profile')">
+            <i class="fas fa-user"></i> Profile
+          </button>
+        </div>
+      </div>
+
+      <!-- Dashboard Section -->
+      <div id="dashboard" class="section active">
+        <div class="section-header">
+          <h2><i class="fas fa-layer-group"></i> Your Groups</h2>
+          <div class="search-container">
+            <input type="text" id="group-search" class="custom-input search-input" placeholder="Search groups..." onkeyup="filterGroups()">
+            <select id="group-sort" class="custom-input filter-dropdown" onchange="sortGroups()">
+              <option value="recent">Recent First</option>
+              <option value="name">Name (A-Z)</option>
+              <option value="expenses">Highest Expenses</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Dashboard stats overview -->
+        <div class="dashboard-quick-stats">
+          <div class="quick-stat-card" onclick="showSection('wallet')">
+            <div class="quick-stat-icon">
+              <i class="fas fa-wallet"></i>
+            </div>
+            <div class="quick-stat-info">
+              <div class="quick-stat-label">Wallet Balance</div>
+              <div class="quick-stat-value" id="wallet-balance-mini">₹0.00</div>
+            </div>
+            <div class="quick-stat-action">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+          
+          <div class="quick-stat-card">
+            <div class="quick-stat-icon">
+              <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="quick-stat-info">
+              <div class="quick-stat-label">Total Paid</div>
+              <div class="quick-stat-value" id="total-paid-mini">₹0.00</div>
+            </div>
+          </div>
+          
+          <div class="quick-stat-card">
+            <div class="quick-stat-icon">
+              <i class="fas fa-hand-holding-usd"></i>
+            </div>
+            <div class="quick-stat-info">
+              <div class="quick-stat-label">Total Received</div>
+              <div class="quick-stat-value" id="total-received-mini">₹0.00</div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="groups-container"></div>
+      </div>
+
+      <!-- Create Group Section -->
+      <div id="create-group" class="section">
+        <h2><i class="fas fa-plus-circle"></i> Create New Group</h2>
+        <form id="create-group-form">
+          <div class="custom-group">
+            <label for="group-name">Group Name</label>
+            <input type="text" id="group-name" class="custom-input" placeholder="e.g., Weekend Trip" required />
+          </div>
+          <div class="custom-group">
+            <label for="group-description">Description (Optional)</label>
+            <input type="text" id="group-description" class="custom-input" placeholder="Brief description" />
+          </div>
+          <div class="custom-group">
+            <label for="group-currency">Currency</label>
+            <select id="group-currency" class="custom-input">
+              <option value="₹">Indian Rupee (₹)</option>
+              <option value="$">US Dollar ($)</option>
+              <option value="€">Euro (€)</option>
+              <option value="£">British Pound (£)</option>
+              <option value="¥">Japanese Yen (¥)</option>
+              <option value="A$">Australian Dollar (A$)</option>
+              <option value="C$">Canadian Dollar (C$)</option>
+            </select>
+          </div>
+          <div class="custom-group">
+            <label for="group-category">Group Category</label>
+            <select id="group-category" class="custom-input">
+              <option value="trip">Trip</option>
+              <option value="home">Home/Roommates</option>
+              <option value="event">Event</option>
+              <option value="project">Project</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="custom-group">
+            <label for="member-names">Add Members</label>
+            <input type="text" id="member-names" class="custom-input" placeholder="Enter names separated by commas" />
+            <small>Example: John, Sarah, Mike, Lisa</small>
+          </div>
+          <button type="submit" class="primary-button"><i class="fas fa-plus-circle"></i> Create Group</button>
+        </form>
+      </div>
+
+      <!-- Join Group Section -->
+      <div id="join-group" class="section">
+        <h2><i class="fas fa-sign-in-alt"></i> Join Existing Group</h2>
+        <form id="join-group-form">
+          <div class="custom-group">
+            <label for="group-code">Group Code or ID</label>
+            <input type="text" id="group-code" class="custom-input" placeholder="Enter group code or ID" required />
+            <small>You can enter either the 8-character invite code or the full group ID</small>
+          </div>
+          <div class="custom-group">
+            <label for="your-name">Your Name</label>
+            <input type="text" id="your-name" class="custom-input" placeholder="Enter your name" required />
+          </div>
+          <button type="submit" class="primary-button"><i class="fas fa-sign-in-alt"></i> Join Group</button>
+        </form>
+      </div>
+
+      <!-- Wallet Section -->
+      <div id="wallet" class="section">
+        <h2><i class="fas fa-wallet"></i> My Wallet</h2>
+        
+        <div class="wallet-dashboard">
+          <div class="wallet-main-card">
+            <div class="wallet-card-header">
+              <div class="wallet-card-title">Available Balance</div>
+              <div class="wallet-card-buttons">
+                <button class="primary-button" onclick="showModal('add-funds-modal')">
+                  <i class="fas fa-plus-circle"></i> Add Funds
+                </button>
+                <button class="secondary-button" onclick="showModal('transaction-history-modal'); showTransactionHistory();">
+                  <i class="fas fa-exchange-alt"></i> Transfer
+                </button>
+              </div>
+            </div>
+            <div class="wallet-card-balance" id="wallet-balance">₹0.00</div>
+            <div class="wallet-card-stats">
+              <div class="wallet-stat">
+                <div class="wallet-stat-value" id="total-paid">₹0.00</div>
+                <div class="wallet-stat-label">Total Paid</div>
+              </div>
+              <div class="wallet-stat">
+                <div class="wallet-stat-value" id="total-received">₹0.00</div>
+                <div class="wallet-stat-label">Total Received</div>
+              </div>
+              <div class="wallet-stat">
+                <div class="wallet-stat-value" id="pending-settlements">₹0.00</div>
+                <div class="wallet-stat-label">Pending</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="wallet-cards-container">
+            <div class="wallet-feature-card">
+              <div class="wallet-feature-icon">
+                <i class="fas fa-history"></i>
+              </div>
+              <div class="wallet-feature-title">Recent Transactions</div>
+              <button class="text-button" onclick="showModal('transaction-history-modal'); showTransactionHistory();">
+                View All <i class="fas fa-arrow-right"></i>
+              </button>
+              <div id="recent-transactions" class="wallet-feature-content">
+                <div class="mini-transaction-list">
+                  <!-- Recent transactions will be loaded here -->
+                  <div class="empty-transactions-message">No recent transactions</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="wallet-feature-card">
+              <div class="wallet-feature-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="wallet-feature-title">Spending Analytics</div>
+              <div class="wallet-feature-content analytics-content">
+                <div class="wallet-chart-container">
+                  <canvas id="wallet-spending-chart"></canvas>
+                </div>
+                <div class="wallet-chart-legend">
+                  <div class="legend-item">
+                    <span class="legend-color" style="background-color: rgba(79, 70, 229, 0.7);"></span>
+                    <span class="legend-text">Money In</span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="legend-color" style="background-color: rgba(244, 63, 94, 0.7);"></span>
+                    <span class="legend-text">Money Out</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="wallet-action-cards">
+            <div class="wallet-action-card" onclick="showModal('add-funds-modal')">
+              <div class="action-card-icon">
+                <i class="fas fa-plus-circle"></i>
+              </div>
+              <div class="action-card-title">Add Funds</div>
+            </div>
+            
+            <div class="wallet-action-card" onclick="showModal('transaction-history-modal'); showTransactionHistory();">
+              <div class="action-card-icon">
+                <i class="fas fa-history"></i>
+              </div>
+              <div class="action-card-title">Transaction History</div>
+            </div>
+            
+            <div class="wallet-action-card">
+              <div class="action-card-icon">
+                <i class="fas fa-paper-plane"></i>
+              </div>
+              <div class="action-card-title">Send Money</div>
+            </div>
+            
+            <div class="wallet-action-card">
+              <div class="action-card-icon">
+                <i class="fas fa-qrcode"></i>
+              </div>
+              <div class="action-card-title">Scan & Pay</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Section -->
+      <div id="profile" class="section">
+        <h2><i class="fas fa-user-circle"></i> User Profile</h2>
+        
+        <div class="profile-container">
+          <div class="profile-card">
+            <div class="profile-header">
+              <div class="profile-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="profile-info">
+                <h3 id="profile-name">Your Name</h3>
+                <div class="profile-meta">
+                  <span><i class="fas fa-fingerprint"></i> User ID: <span id="profile-user-id" class="user-id"></span></span>
+                  <button class="icon-button" onclick="copyUserId()">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+              </div>
+              <button class="secondary-button" onclick="showModal('edit-profile-modal')">
+                <i class="fas fa-edit"></i> Edit Profile
+              </button>
+            </div>
+            
+            <div class="profile-stats">
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+                <div class="stat-number" id="profile-groups-count">0</div>
+                <div class="stat-label">Groups</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-receipt"></i></div>
+                <div class="stat-number" id="profile-expenses-count">0</div>
+                <div class="stat-label">Expenses</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                <div class="stat-number" id="profile-wallet-balance">₹0</div>
+                <div class="stat-label">Wallet Balance</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-exchange-alt"></i></div>
+                <div class="stat-number" id="profile-settlements-count">0</div>
+                <div class="stat-label">Settlements</div>
+              </div>
+            </div>
+            
+            <div class="profile-section">
+              <h4><i class="fas fa-cog"></i> Preferences</h4>
+              <div class="preferences-form">
+                <div class="form-group">
+                  <label for="default-currency">Default Currency</label>
+                  <select id="default-currency" class="custom-input" onchange="updateUserPreference('currency', this.value)">
+                    <option value="₹">Indian Rupee (₹)</option>
+                    <option value="$">US Dollar ($)</option>
+                    <option value="€">Euro (€)</option>
+                    <option value="£">British Pound (£)</option>
+                    <option value="¥">Japanese Yen (¥)</option>
+                    <option value="A$">Australian Dollar (A$)</option>
+                    <option value="C$">Canadian Dollar (C$)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="theme-preference">Theme</label>
+                  <select id="theme-preference" class="custom-input" onchange="updateUserPreference('theme', this.value)">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="system">System Default</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="notifications-preference" onchange="updateUserPreference('notifications', this.checked)">
+                    <span class="checkmark"></span>
+                    Enable Notifications
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div class="profile-section">
+              <h4><i class="fas fa-id-card"></i> Your Groups</h4>
+              <div id="user-groups-container">
+                <!-- User groups will be loaded here -->
+              </div>
+            </div>
+            
+            <div class="profile-section">
+              <h4><i class="fas fa-qrcode"></i> Share Your Profile</h4>
+              <div class="qr-container">
+                <div id="profile-qr-code" class="qr-code"></div>
+                <p class="qr-info">Scan this QR code to share your profile ID with friends</p>
+                <button class="secondary-button" onclick="generateProfileQR()">
+                  <i class="fas fa-sync"></i> Regenerate QR
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Profile Modal -->
+      <div id="edit-profile-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2><i class="fas fa-user-edit"></i> Edit Profile</h2>
+            <span class="close" onclick="closeModal('edit-profile-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <form id="edit-profile-form">
+              <div class="custom-group">
+                <label for="edit-name">Your Name</label>
+                <input type="text" id="edit-name" class="custom-input" placeholder="Enter your name" required />
+              </div>
+              <div class="custom-group">
+                <label for="edit-email">Email (Optional)</label>
+                <input type="email" id="edit-email" class="custom-input" placeholder="Enter your email" />
+              </div>
+              <div class="custom-group">
+                <label for="edit-phone">Phone (Optional)</label>
+                <input type="tel" id="edit-phone" class="custom-input" placeholder="Enter your phone number" />
+              </div>
+              <div class="custom-group">
+                <label for="edit-avatar">Profile Picture</label>
+                <div class="avatar-selection">
+                  <div class="avatar-option selected" data-avatar="default">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <div class="avatar-option" data-avatar="user1">
+                    <i class="fas fa-user-tie"></i>
+                  </div>
+                  <div class="avatar-option" data-avatar="user2">
+                    <i class="fas fa-user-graduate"></i>
+                  </div>
+                  <div class="avatar-option" data-avatar="user3">
+                    <i class="fas fa-user-astronaut"></i>
+                  </div>
+                  <div class="avatar-option" data-avatar="user4">
+                    <i class="fas fa-user-ninja"></i>
+                  </div>
+                </div>
+                <input type="hidden" id="selected-avatar" value="default" />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="secondary-button" onclick="closeModal('edit-profile-modal')">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button class="primary-button" onclick="saveProfile()">
+              <i class="fas fa-save"></i> Save Profile
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group Details Section -->
+      <div id="group-details" class="section">
+        <div class="section-header">
+          <h2 id="group-title">Group Details</h2>
+          <button class="secondary-button" onclick="showSection('dashboard')">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+        </div>
+
+        <div class="group-id-display">
+          <div class="id-field">
+            <label>Group ID:</label>
+            <span id="group-unique-id" class="group-id"></span>
+            <button class="icon-button" onclick="copyGroupId()">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+          <div class="id-field">
+            <label>Invite Code:</label>
+            <span id="group-invite-code" class="group-code"></span>
+            <button class="icon-button" onclick="copyGroupCode()">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-receipt"></i></div>
+            <div class="stat-number" id="total-expenses">₹0</div>
+            <div class="stat-label">Total Expenses</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-number" id="total-members">0</div>
+            <div class="stat-label">Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div class="stat-number" id="expense-count">0</div>
+            <div class="stat-label">Expenses</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-chart-pie"></i></div>
+            <div class="stat-number" id="avg-expense">₹0</div>
+            <div class="stat-label">Avg. Expense</div>
+          </div>
+        </div>
+
+        <div class="tab-container">
+          <button class="tab-button active" onclick="showExpensesEnhanced()"><i class="fas fa-list"></i> Expenses</button>
+          <button class="tab-button" onclick="showBalances()"><i class="fas fa-balance-scale"></i> Balances</button>
+          <button class="tab-button" onclick="showSettlements()"><i class="fas fa-exchange-alt"></i> Settlements</button>
+          <button class="tab-button" onclick="showAnalytics()"><i class="fas fa-chart-bar"></i> Analytics</button>
+          <button class="tab-button" onclick="showBudgets()"><i class="fas fa-wallet"></i> Budgets</button>
+          <button class="tab-button" onclick="showHistory('timeline')"><i class="fas fa-history"></i> History</button>
+        </div>
+
+        <div id="tab-content">
+          <!-- Content will be loaded here -->
+        </div>
+
+        <div class="group-actions">
+          <button class="primary-button" onclick="showModal('add-expense-modal')">
+            <i class="fas fa-plus"></i> Add Expense
+          </button>
+          <button class="secondary-button" onclick="showModal('add-budget-modal')">
+            <i class="fas fa-wallet"></i> Add Budget
+          </button>
+          <button class="secondary-button" onclick="exportGroupData()">
+            <i class="fas fa-file-export"></i> Export Data
+          </button>
+          <button class="secondary-button" onclick="shareGroup()">
+            <i class="fas fa-share-alt"></i> Share Group
+          </button>
+          <button class="danger-button" onclick="confirmDeleteGroup()">
+            <i class="fas fa-trash"></i> Delete Group
+          </button>
+        </div>
+      </div>
+
+      <!-- Add Expense Modal -->
+      <div id="add-expense-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2><i class="fas fa-plus-circle"></i> Add New Expense</h2>
+            <span class="close" onclick="closeModal('add-expense-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <form id="add-expense-form">
+              <div class="form-grid">
+                <div class="custom-group">
+                  <label for="expense-description">Description</label>
+                  <input type="text" id="expense-description" class="custom-input" 
+                    placeholder="What was this expense for?" required />
+                </div>
+                <div class="custom-group">
+                  <label for="expense-amount">Amount</label>
+                  <input type="number" id="expense-amount" class="custom-input" 
+                    placeholder="0.00" step="0.01" min="0" required />
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="custom-group">
+                  <label for="expense-category">Category</label>
+                  <select id="expense-category" class="custom-input">
+                    <option value="food">Food & Drinks</option>
+                    <option value="transportation">Transportation</option>
+                    <option value="accommodation">Accommodation</option>
+                    <option value="activities">Activities & Entertainment</option>
+                    <option value="shopping">Shopping</option>
+                    <option value="utilities">Utilities</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="custom-group">
+                  <label for="expense-payer">Paid by</label>
+                  <select id="expense-payer" class="custom-input"></select>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="custom-group">
+                  <label for="expense-date">Date</label>
+                  <input type="date" id="expense-date" class="custom-input" required />
+                </div>
+                <div class="custom-group">
+                  <label for="split-type">Split Type</label>
+                  <select id="split-type" class="custom-input" onchange="toggleSplitOptions()">
+                    <option value="equal">Equal Split</option>
+                    <option value="unequal">Unequal Split</option>
+                    <option value="percentage">Percentage Split</option>
+                    <option value="shares">By Shares</option>
+                    <option value="adjustment">With Adjustments</option>
+                    <option value="exclude">Exclude Members</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="custom-group">
+                <label>Multiple Payers?</label>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="multiple-payers-toggle" onchange="toggleMultiplePayers()">
+                  <label for="multiple-payers-toggle"></label>
+                  <span class="toggle-label">No</span>
+                </div>
+              </div>
+
+              <div id="multiple-payers-container" style="display: none;">
+                <div class="custom-group">
+                  <label>Payers and Amounts</label>
+                  <div id="payers-list" class="payers-list"></div>
+                  <button type="button" class="secondary-button small-button" onclick="addPayerField()">
+                    <i class="fas fa-plus"></i> Add Payer
+                  </button>
+                </div>
+              </div>
+
+              <div class="custom-group">
+                <label>Split between</label>
+                <div id="expense-split-members" class="checkbox-group"></div>
+              </div>
+
+              <div id="custom-split-container" style="display: none;"></div>
+
+              <div id="excluded-members-container" style="display: none;">
+                <div class="alert-box">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Excluded members won't share this expense</span>
+                </div>
+              </div>
+
+              <div class="custom-group">
+                <label for="expense-notes">Notes (Optional)</label>
+                <textarea id="expense-notes" class="custom-input" 
+                  placeholder="Add any additional notes here" rows="3"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="secondary-button" onclick="closeModal('add-expense-modal')">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="submit" form="add-expense-form" class="primary-button">
+              <i class="fas fa-save"></i> Save Expense
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div id="delete-confirmation-modal" class="modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal('delete-confirmation-modal')">&times;</span>
+          <h2><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h2>
+          <p>Are you sure you want to delete this group? This action cannot be undone.</p>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button class="secondary-button" onclick="closeModal('delete-confirmation-modal')">Cancel</button>
+            <button class="danger-button" id="confirm-delete-btn">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Share Group Modal -->
+      <div id="share-group-modal" class="modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal('share-group-modal')">&times;</span>
+          <h2><i class="fas fa-share-alt"></i> Share Group</h2>
+          <div class="custom-group">
+            <label>Group Code</label>
+            <div class="share-code-container">
+              <span id="share-group-code" class="share-code"></span>
+              <button id="copy-code-btn" class="secondary-button" onclick="copyGroupCode()">
+                <i class="fas fa-copy"></i> Copy
+              </button>
+            </div>
+          </div>
+          <div class="custom-group">
+            <label>Share via</label>
+            <div class="share-buttons">
+              <button class="share-button whatsapp" onclick="shareVia('whatsapp')">
+                <i class="fab fa-whatsapp"></i> WhatsApp
+              </button>
+              <button class="share-button email" onclick="shareVia('email')">
+                <i class="fas fa-envelope"></i> Email
+              </button>
+              <button class="share-button sms" onclick="shareVia('sms')">
+                <i class="fas fa-sms"></i> SMS
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expense Details Modal -->
+      <div id="expense-detail-modal" class="modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal('expense-detail-modal')">&times;</span>
+          <div id="expense-detail-content"></div>
+        </div>
+      </div>
+
+      <!-- Notification -->
+      <div id="notification" class="notification"></div>
+
+      <!-- Group Details Page -->
+      <div class="group-page">
+        <!-- Group Header -->
+        <div class="group-header">
+          <div class="group-header-content">
+            <div class="group-title">
+              <div class="group-avatar">
+                <i class="fas fa-users"></i>
+              </div>
+              <div>
+                <h1>Loading group...</h1>
+                <p>Please wait...</p>
+              </div>
+            </div>
+            <div class="group-actions">
+              <button class="primary-button" onclick="openModal('add-expense-modal')">
+                <i class="fas fa-plus"></i> Add Expense
+              </button>
+              <button class="secondary-button" onclick="openModal('settle-up-modal')">
+                <i class="fas fa-exchange-alt"></i> Settle Up
+              </button>
+              <button class="danger-button" onclick="confirmDeleteGroup()">
+                <i class="fas fa-trash"></i> Delete Group
+              </button>
+              <button class="secondary-button" onclick="console.log(debugGroupState())" style="display: none;">
+                <i class="fas fa-bug"></i> Debug
+              </button>
+            </div>
+          </div>
+
+          <div class="group-stats">
+            <div class="stat-card">
+              <h3>Total Expenses</h3>
+              <p>$0.00</p>
+            </div>
+            <div class="stat-card">
+              <h3>Your Balance</h3>
+              <p class="balance-positive">$0.00</p>
+            </div>
+            <div class="stat-card">
+              <h3>Members</h3>
+              <p>0 people</p>
+            </div>
+            <div class="stat-card">
+              <h3>Last Activity</h3>
+              <p>No activity</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="group-content">
+          <!-- Left Column -->
+          <div class="main-column">
+            <!-- Expenses List -->
+            <div class="expense-list">
+              <div class="expense-list-header">
+                <h2>Recent Expenses</h2>
+                <div class="header-actions">
+                  <button class="icon-button" onclick="toggleExpenseFilters()">
+                    <i class="fas fa-filter"></i>
+                  </button>
+                  <button class="icon-button" onclick="exportExpenses()">
+                    <i class="fas fa-download"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="expense-filters">
+                <select class="custom-input" onchange="filterExpenses('category')">
+                  <option value="">All Categories</option>
+                  <option value="food">Food & Drinks</option>
+                  <option value="transportation">Transportation</option>
+                  <option value="accommodation">Accommodation</option>
+                  <option value="activities">Activities</option>
+                </select>
+                <select class="custom-input" onchange="filterExpenses('member')">
+                  <option value="">All Members</option>
+                </select>
+                <input type="date" class="custom-input" onchange="filterExpenses('date')" />
+              </div>
+
+              <div class="expense-items">
+                <!-- Expenses will be loaded dynamically -->
+                <div class="loading-state">
+                  <div class="spinner"></div>
+                  <p>Loading expenses...</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Activity Timeline -->
+            <div class="activity-section">
+              <div class="activity-header">
+                <h2>Recent Activity</h2>
+              </div>
+              <div class="activity-list">
+                <!-- Activity items will be loaded dynamically -->
+                <div class="loading-state">
+                  <div class="spinner"></div>
+                  <p>Loading activity...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="sidebar">
+            <!-- Members Section -->
+            <div class="members-section">
+              <div class="members-header">
+                <h2>Members</h2>
+                <button class="icon-button" onclick="openModal('add-member-modal')">
+                  <i class="fas fa-user-plus"></i>
+                </button>
+              </div>
+              <div class="member-list">
+                <!-- Members will be loaded dynamically -->
+                <div class="loading-state">
+                  <div class="spinner"></div>
+                  <p>Loading members...</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Settlement Section -->
+            <div class="settlement-section">
+              <div class="settlement-header">
+                <h2>Suggested Settlements</h2>
+              </div>
+              <div class="settlement-list">
+                <!-- Settlements will be loaded dynamically -->
+                <div class="loading-state">
+                  <div class="spinner"></div>
+                  <p>Calculating settlements...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Member Modal -->
+      <div id="add-member-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2><i class="fas fa-user-plus"></i> Add New Member</h2>
+            <span class="close" onclick="closeModal('add-member-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <form id="add-member-form">
+              <div class="custom-group">
+                <label for="member-name">Name</label>
+                <input type="text" id="member-name" class="custom-input" 
+                  placeholder="Enter member's name" required />
+              </div>
+              <div class="custom-group">
+                <label for="member-email">Email (Optional)</label>
+                <input type="email" id="member-email" class="custom-input" 
+                  placeholder="Enter member's email" />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="secondary-button" onclick="closeModal('add-member-modal')">
+              Cancel
+            </button>
+            <button type="submit" form="add-member-form" class="primary-button">
+              Add Member
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settle Up Modal -->
+      <div id="settle-up-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2><i class="fas fa-exchange-alt"></i> Settle Up</h2>
+            <span class="close" onclick="closeModal('settle-up-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <form id="settle-up-form">
+              <div class="custom-group">
+                <label for="settlement-from">From</label>
+                <select id="settlement-from" class="custom-input" required></select>
+              </div>
+              <div class="custom-group">
+                <label for="settlement-to">To</label>
+                <select id="settlement-to" class="custom-input" required></select>
+              </div>
+              <div class="custom-group">
+                <label for="settlement-amount">Amount</label>
+                <input type="number" id="settlement-amount" class="custom-input" 
+                  placeholder="0.00" step="0.01" min="0" required />
+              </div>
+              <div class="custom-group">
+                <label for="settlement-date">Date</label>
+                <input type="date" id="settlement-date" class="custom-input" required />
+              </div>
+              <div class="custom-group">
+                <label for="settlement-notes">Notes (Optional)</label>
+                <textarea id="settlement-notes" class="custom-input" 
+                  placeholder="Add any notes about this settlement"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="secondary-button" onclick="closeModal('settle-up-modal')">
+              Cancel
+            </button>
+            <button type="submit" form="settle-up-form" class="primary-button">
+              Record Settlement
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Budget Modal -->
+      <div id="add-budget-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2><i class="fas fa-wallet"></i> Add New Budget</h2>
+            <span class="close" onclick="closeModal('add-budget-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <form id="add-budget-form">
+              <div class="form-grid">
+                <div class="custom-group">
+                  <label for="budget-name">Budget Name</label>
+                  <input type="text" id="budget-name" class="custom-input" 
+                    placeholder="e.g., Monthly Food Budget" required />
+                </div>
+                <div class="custom-group">
+                  <label for="budget-amount">Budget Amount</label>
+                  <input type="number" id="budget-amount" class="custom-input" 
+                    placeholder="0.00" step="0.01" min="0" required />
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="custom-group">
+                  <label for="budget-category">Category</label>
+                  <select id="budget-category" class="custom-input">
+                    <option value="all">All Categories</option>
+                    <option value="food">Food & Drinks</option>
+                    <option value="transportation">Transportation</option>
+                    <option value="accommodation">Accommodation</option>
+                    <option value="activities">Activities & Entertainment</option>
+                    <option value="shopping">Shopping</option>
+                    <option value="utilities">Utilities</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="custom-group">
+                  <label for="budget-period">Time Period</label>
+                  <select id="budget-period" class="custom-input">
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly" selected>Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="custom">Custom Date Range</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="custom-date-range" class="form-grid" style="display: none;">
+                <div class="custom-group">
+                  <label for="budget-start-date">Start Date</label>
+                  <input type="date" id="budget-start-date" class="custom-input" />
+                </div>
+                <div class="custom-group">
+                  <label for="budget-end-date">End Date</label>
+                  <input type="date" id="budget-end-date" class="custom-input" />
+                </div>
+              </div>
+
+              <div class="custom-group">
+                <label for="budget-notes">Notes (Optional)</label>
+                <textarea id="budget-notes" class="custom-input" 
+                  placeholder="Add any additional notes about this budget" rows="3"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="secondary-button" onclick="closeModal('add-budget-modal')">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button class="primary-button" onclick="addBudget()">
+              <i class="fas fa-save"></i> Save Budget
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Funds Modal -->
+      <div id="add-funds-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2><i class="fas fa-plus-circle"></i> Add Funds to Wallet</h2>
+            <span class="close" onclick="closeModal('add-funds-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <form id="add-funds-form">
+              <div class="custom-group">
+                <label for="funds-amount">Amount</label>
+                <input type="number" id="funds-amount" class="custom-input" 
+                  placeholder="0.00" step="0.01" min="0" required />
+              </div>
+              <div class="custom-group">
+                <label for="payment-method">Payment Method</label>
+                <select id="payment-method" class="custom-input">
+                  <option value="card">Credit/Debit Card</option>
+                  <option value="upi">UPI</option>
+                  <option value="netbanking">Net Banking</option>
+                  <option value="wallet">Other Wallet</option>
+                </select>
+              </div>
+              <div class="custom-group">
+                <label for="funds-notes">Notes (Optional)</label>
+                <textarea id="funds-notes" class="custom-input" 
+                  placeholder="Add any additional notes here" rows="2"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="secondary-button" onclick="closeModal('add-funds-modal')">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button class="primary-button" onclick="addFunds()">
+              <i class="fas fa-check"></i> Add Funds
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction History Modal -->
+      <div id="transaction-history-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2><i class="fas fa-history"></i> Transaction History</h2>
+            <span class="close" onclick="closeModal('transaction-history-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div class="transaction-filters">
+              <select id="transaction-type-filter" class="custom-input" onchange="filterTransactions()">
+                <option value="all">All Transactions</option>
+                <option value="add">Added Funds</option>
+                <option value="payment">Payments</option>
+                <option value="received">Received</option>
+              </select>
+              <select id="transaction-date-filter" class="custom-input" onchange="filterTransactions()">
+                <option value="all">All Time</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="quarter">Last 3 Months</option>
+                <option value="year">This Year</option>
+              </select>
+            </div>
+            <div id="transactions-container" class="transactions-list">
+              <!-- Transactions will be loaded here -->
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="secondary-button" onclick="closeModal('transaction-history-modal')">
+              <i class="fas fa-times"></i> Close
+            </button>
+            <button class="secondary-button" onclick="exportTransactions()">
+              <i class="fas fa-file-export"></i> Export
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <!-- About Section -->
+            <div class="footer-section footer-about">
+                <div class="footer-logo">
+                    <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="24" cy="24" r="22" fill="#fff" stroke="#4338ca" stroke-width="2" />
+                        <text x="50%" y="56%" text-anchor="middle" fill="#4f46e5" font-size="22" font-family="Inter, Arial, sans-serif" font-weight="bold" dy=".3em">₹$</text>
+                        <path d="M16 32c2 2 6 2 8 0s6-2 8 0" stroke="#4338ca" stroke-width="2" stroke-linecap="round" fill="none" />
+                    </svg>
+                    <h2>Expensiver</h2>
+                </div>
+                <p>
+                    Smart group expense tracking made simple. Split bills, track expenses, 
+                    and settle debts with friends, roommates, and travel groups.
+                </p>
+                <div class="social-links">
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="#" onclick="showSection('dashboard')"><i class="fas fa-chevron-right"></i> Dashboard</a></li>
+                    <li><a href="#" onclick="showSection('create-group')"><i class="fas fa-chevron-right"></i> Create Group</a></li>
+                    <li><a href="#" onclick="showSection('join-group')"><i class="fas fa-chevron-right"></i> Join Group</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Settings</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Help Center</a></li>
+                </ul>
+            </div>
+
+            <!-- Features -->
+            <div class="footer-section">
+                <h3>Features</h3>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Group Expense Tracking</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Smart Settlements</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Expense Analytics</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Multi-Currency Support</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Receipt Scanning</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-section">
+                <h3>Contact Us</h3>
+                <ul class="contact-info">
+                    <li>
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>123 Innovation Hub, Tech Valley, CA 94043</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-envelope"></i>
+                        <span>support@expensiver.com</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-phone-alt"></i>
+                        <span>+91 8010095340</span>
+                    </li>
+                </ul>
+                <div>
+                    <h4 style="color: var(--gray-200); margin: 1.5rem 0 0.5rem;">Stay Updated</h4>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Your email address" required>
+                        <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="footer-bottom">
+            <p>&copy; 2024 Expensiver. All Rights Reserved | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> | <a href="#">FAQ</a></p>
+        </div>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
